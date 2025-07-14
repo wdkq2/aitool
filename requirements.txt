@@ -1,0 +1,11 @@
+Flask==2.3.3
+geopandas==0.14.0
+pandas==2.1.1
+shapely==2.0.2
+numpy==1.24.3
+requests==2.31.0
+fiona==1.9.5
+pyproj==3.6.1
+folium==0.14.0
+geojson==3.0.1
+python-dotenv==1.0.0
