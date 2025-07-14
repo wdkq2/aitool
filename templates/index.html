@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>농촌 데이터센터 건설 입지 추천 AI 툴</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .header-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+        }
+        .upload-section {
+            background: #f8f9fa;
+            padding: 2rem 0;
+        }
+        .control-panel {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        .weight-slider {
+            margin: 1rem 0;
+        }
+        .weight-label {
+            font-weight: bold;
+            color: #495057;
+        }
+        .result-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
+        }
+        .btn-custom {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 0.75rem 2rem;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            color: white;
+        }
+        .progress-section {
+            margin: 2rem 0;
+        }
+        .candidate-item {
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s;
+        }
+        .candidate-item:hover {
+            background: #f8f9fa;
+            border-color: #667eea;
+        }
+        .score-badge {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        .score-a { color: #dc3545; }
+        .score-b { color: #fd7e14; }
+        .score-c { color: #ffc107; }
+        .score-d { color: #198754; }
+        .score-e { color: #0dcaf0; }
+    </style>
+</head>
+<body>
+    <!-- 헤더 섹션 -->
+    <div class="header-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12 text-center">
+                    <h1><i class="fas fa-map-marked-alt"></i> 농촌 데이터센터 건설 입지 추천 AI 툴</h1>
+                    <p class="lead">경상남도 100m 격자 기반 최적 건설 후보지 분석 시스템</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 파일 업로드 섹션 -->
+    <div class="upload-section">
+        <div class="container">
+            <div class="control-panel">
+                <h3><i class="fas fa-upload"></i> 데이터 업로드</h3>
+                
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">카카오 Map API 키</label>
+                                <input type="text" class="form-control" name="kakao_api_key" required>
+                                <small class="form-text text-muted">주소→좌표 변환용</small>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">100m 격자 지도 (SHP)</label>
+                                <input type="file" class="form-control" name="grid_shapefile" accept=".shp,.zip" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">건축물 정보 (SHP)</label>
+                                <input type="file" class="form-control" name="building_shapefile" accept=".shp,.zip" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">농업진흥지역도 (SHP)</label>
+                                <input type="file" class="form-control" name="agricultural_shapefile" accept=".shp,.zip" required>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">격자별 주택수 데이터 (TXT/CSV)</label>
+                                <input type="file" class="form-control" name="housing_data" accept=".txt,.csv" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">점수표 (CSV)</label>
+                                <input type="file" class="form-control" name="score_table" accept=".csv" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">가중치표 (CSV)</label>
+                                <input type="file" class="form-control" name="weight_table" accept=".csv" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">태양광 발전소 주소 (줄바꿈으로 구분)</label>
+                                <textarea class="form-control" name="solar_addresses" rows="5" 
+                                placeholder="경상남도 창원시 의창구 &#10;경상남도 김해시 장유면"></textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">변전소 주소 (줄바꿈으로 구분)</label>
+                                <textarea class="form-control" name="substation_addresses" rows="5"
+                                placeholder="경상남도 창원시 성산구 &#10;경상남도 진주시 상평동"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-custom">
+                            <i class="fas fa-upload"></i> 파일 업로드
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 처리 진행 상황 -->
+    <div class="container">
+        <div class="progress-section" id="progressSection" style="display: none;">
+            <div class="control-panel">
+                <h4><i class="fas fa-cogs"></i> 처리 진행 상황</h4>
+                <div class="progress mb-3">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                         id="progressBar" style="width: 0%"></div>
+                </div>
+                <div id="progressText">대기 중...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 가중치 조절 섹션 -->
+    <div class="container">
+        <div class="control-panel" id="weightSection" style="display: none;">
+            <h3><i class="fas fa-balance-scale"></i> 가중치 조절</h3>
+            <p class="text-muted">각 평가 항목의 중요도를 조절하여 점수를 실시간으로 업데이트할 수 있습니다.</p>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="weight-slider">
+                        <label class="weight-label">A항: 변전소 접근성</label>
+                        <input type="range" class="form-range" id="weightA" min="0" max="100" value="25">
+                        <span id="weightAValue">25%</span>
+                    </div>
+                    
+                    <div class="weight-slider">
+                        <label class="weight-label">B항: 태양광 발전소 접근성</label>
+                        <input type="range" class="form-range" id="weightB" min="0" max="100" value="25">
+                        <span id="weightBValue">25%</span>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="weight-slider">
+                        <label class="weight-label">D항: 농촌인구밀도</label>
+                        <input type="range" class="form-range" id="weightD" min="0" max="100" value="25">
+                        <span id="weightDValue">25%</span>
+                    </div>
+                    
+                    <div class="weight-slider">
+                        <label class="weight-label">E항: 교통 접근성</label>
+                        <input type="range" class="form-range" id="weightE" min="0" max="100" value="25">
+                        <span id="weightEValue">25%</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-3">
+                <button class="btn btn-custom" id="updateWeightsBtn">
+                    <i class="fas fa-sync-alt"></i> 가중치 적용
+                </button>
+                <button class="btn btn-success" id="showMapBtn">
+                    <i class="fas fa-map"></i> 지도 보기
+                </button>
+                <button class="btn btn-info" id="downloadBtn">
+                    <i class="fas fa-download"></i> 결과 다운로드
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 통계 및 결과 섹션 -->
+    <div class="container">
+        <div class="row" id="resultsSection" style="display: none;">
+            <div class="col-md-6">
+                <div class="result-card">
+                    <h4><i class="fas fa-chart-bar"></i> 분석 통계</h4>
+                    <div id="statisticsContent">
+                        <!-- 통계 내용이 여기에 표시됩니다 -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="result-card">
+                    <h4><i class="fas fa-trophy"></i> 상위 후보지</h4>
+                    <div id="candidatesContent">
+                        <!-- 후보지 목록이 여기에 표시됩니다 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // 전역 변수
+        let currentWeights = {A: 25, B: 25, D: 25, E: 25};
+        let addressData = {solar: [], substation: []};
+
+        // 파일 업로드 처리
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            // 주소 데이터 저장
+            addressData.solar = formData.get('solar_addresses').split('\n').filter(addr => addr.trim());
+            addressData.substation = formData.get('substation_addresses').split('\n').filter(addr => addr.trim());
+            
+            showProgress('파일 업로드 중...', 20);
+            
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showProgress('업로드 완료! 데이터 처리 중...', 50);
+                    await processData();
+                } else {
+                    alert('업로드 실패: ' + result.message);
+                    hideProgress();
+                }
+            } catch (error) {
+                alert('업로드 중 오류가 발생했습니다: ' + error.message);
+                hideProgress();
+            }
+        });
+
+        // 데이터 처리
+        async function processData() {
+            try {
+                const response = await fetch('/process', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(addressData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showProgress('처리 완료!', 100);
+                    setTimeout(() => {
+                        hideProgress();
+                        showResults(result);
+                    }, 1000);
+                } else {
+                    alert('처리 실패: ' + result.message);
+                    hideProgress();
+                }
+            } catch (error) {
+                alert('처리 중 오류가 발생했습니다: ' + error.message);
+                hideProgress();
+            }
+        }
+
+        // 진행 상황 표시
+        function showProgress(text, percentage) {
+            document.getElementById('progressSection').style.display = 'block';
+            document.getElementById('progressText').textContent = text;
+            document.getElementById('progressBar').style.width = percentage + '%';
+        }
+
+        function hideProgress() {
+            document.getElementById('progressSection').style.display = 'none';
+        }
+
+        // 결과 표시
+        function showResults(data) {
+            document.getElementById('weightSection').style.display = 'block';
+            document.getElementById('resultsSection').style.display = 'block';
+            
+            // 통계 표시
+            displayStatistics(data.statistics);
+            
+            // 후보지 목록 로드
+            loadTopCandidates();
+        }
+
+        // 통계 표시
+        function displayStatistics(stats) {
+            const content = `
+                <div class="row">
+                    <div class="col-6">
+                        <strong>총 분석 격자:</strong><br>
+                        <span class="fs-4 text-primary">${stats.total_score.count || 'N/A'}</span>
+                    </div>
+                    <div class="col-6">
+                        <strong>평균 점수:</strong><br>
+                        <span class="fs-4 text-success">${stats.total_score.mean.toFixed(2)}</span>
+                    </div>
+                </div>
+                <hr>
+                <div class="row text-center">
+                    <div class="col-3">
+                        <small>변전소 접근성</small><br>
+                        <span class="score-a">${stats.score_a.mean.toFixed(1)}</span>
+                    </div>
+                    <div class="col-3">
+                        <small>태양광 접근성</small><br>
+                        <span class="score-b">${stats.score_b.mean.toFixed(1)}</span>
+                    </div>
+                    <div class="col-3">
+                        <small>인구밀도</small><br>
+                        <span class="score-d">${stats.score_d.mean.toFixed(1)}</span>
+                    </div>
+                    <div class="col-3">
+                        <small>교통 접근성</small><br>
+                        <span class="score-e">${stats.score_e.mean.toFixed(1)}</span>
+                    </div>
+                </div>
+            `;
+            document.getElementById('statisticsContent').innerHTML = content;
+        }
+
+        // 상위 후보지 로드
+        async function loadTopCandidates() {
+            try {
+                const response = await fetch('/api/top_candidates?top_n=10');
+                const result = await response.json();
+                
+                if (result.success) {
+                    displayCandidates(result.candidates);
+                }
+            } catch (error) {
+                console.error('후보지 로드 실패:', error);
+            }
+        }
+
+        // 후보지 목록 표시
+        function displayCandidates(candidates) {
+            const content = candidates.map((candidate, index) => `
+                <div class="candidate-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>#${index + 1}</strong>
+                            <span class="badge bg-${getGradeBadgeColor(candidate.score_grade)} ms-2">
+                                ${candidate.score_grade}등급
+                            </span>
+                        </div>
+                        <div class="score-badge">
+                            ${candidate.total_score.toFixed(2)}점
+                        </div>
+                    </div>
+                    <small class="text-muted">
+                        위치: ${candidate.lat.toFixed(4)}, ${candidate.lng.toFixed(4)}
+                    </small>
+                </div>
+            `).join('');
+            
+            document.getElementById('candidatesContent').innerHTML = content;
+        }
+
+        function getGradeBadgeColor(grade) {
+            const colors = {A: 'danger', B: 'warning', C: 'info', D: 'success', F: 'secondary'};
+            return colors[grade] || 'secondary';
+        }
+
+        // 가중치 슬라이더 이벤트
+        ['A', 'B', 'D', 'E'].forEach(category => {
+            const slider = document.getElementById(`weight${category}`);
+            const valueSpan = document.getElementById(`weight${category}Value`);
+            
+            slider.addEventListener('input', function() {
+                currentWeights[category] = parseInt(this.value);
+                valueSpan.textContent = this.value + '%';
+            });
+        });
+
+        // 가중치 업데이트
+        document.getElementById('updateWeightsBtn').addEventListener('click', async function() {
+            try {
+                const response = await fetch('/api/update_weights', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(currentWeights)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('가중치가 업데이트되었습니다!');
+                    displayStatistics(result.statistics);
+                    loadTopCandidates();
+                } else {
+                    alert('업데이트 실패: ' + result.message);
+                }
+            } catch (error) {
+                alert('가중치 업데이트 중 오류가 발생했습니다: ' + error.message);
+            }
+        });
+
+        // 지도 보기
+        document.getElementById('showMapBtn').addEventListener('click', function() {
+            window.open('/map', '_blank');
+        });
+
+        // 결과 다운로드
+        document.getElementById('downloadBtn').addEventListener('click', function() {
+            window.location.href = '/download_results';
+        });
+    </script>
+</body>
+</html>
