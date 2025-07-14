@@ -96,6 +96,17 @@ cp .env.example .env
 # .env 파일에서 KAKAO_API_KEY 값 수정
 ```
 
+### 2-1. 실제 데이터 다운로드
+Google Drive에 공유된 실제 데이터를 `gdown`으로 받을 수 있습니다.
+
+```bash
+pip install gdown
+gdown --folder https://drive.google.com/drive/folders/1CTZWeh_QHPRpc5qUEwwLMwVG8ctAlLpk -O data/real_data
+```
+
+다운로드가 완료되면 `data/real_data` 폴더 아래에 Shapefile 및 CSV 파일이 저장됩니다.
+웹 툴에서 파일 업로드 시 해당 폴더의 파일을 선택하면 됩니다.
+
 ### 3. 애플리케이션 실행
 ```bash
 python app.py
